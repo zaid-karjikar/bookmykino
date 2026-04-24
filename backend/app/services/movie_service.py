@@ -1,5 +1,5 @@
 from app.database.db import database
-from app.schemas.schemas import ShowtimeResponse
+from app.schemas.movie_schema import ShowtimeResponse
 
 
 def get_all_movies():
