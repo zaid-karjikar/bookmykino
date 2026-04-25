@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMovies } from "../api";
-import MovieCard from "../components/MovieCard";
+import MovieRow from "../components/MovieRow";
+import MovieGrid from "../components/MovieGrid";
+
 
 export default function HomePage() {
   const [movies, setMovies] = useState([]);
@@ -16,18 +18,23 @@ export default function HomePage() {
 
   if (error) return <p>{error}</p>;
 
+  const playingToday = movies.filter((m) => m.playing_today);
+
+  const handleMovieClick = (id) => navigate(`/movies/${id}`);
+
   return (
-    <div>
-      <h1>BoxOffice</h1>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-        {movies.map((movie) => (
-          <MovieCard
-            key={movie.id}
-            movie={movie}
-            onClick={() => navigate(`/movies/${movie.id}`)}
-          />
-        ))}
-      </div>
+  <div style={{ padding: 24 }}>
+      <h1>BookMyKino</h1>
+
+      <section style={{ marginBottom: 32 }}>
+        <h2>Playing today</h2>
+        <MovieRow movies={playingToday} onMovieClick={handleMovieClick} />
+      </section>
+
+      <section>
+        <h2>Browse movies</h2>
+        <MovieGrid movies={movies} onMovieClick={handleMovieClick} />
+      </section>
     </div>
   );
 }
