@@ -7,6 +7,7 @@ class MovieResponse(BaseModel):
     id: UUID
     title: str
     poster_url: str | None
+    playing_today: bool
 
 
 class ShowtimeResponse(BaseModel):
