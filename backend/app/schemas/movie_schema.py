@@ -18,7 +18,7 @@ class ShowtimeResponse(BaseModel):
     location_hint: str | None
 
     @classmethod
-    def from_supabase(cls, data: dict):
+    def from_database(cls, data: dict):
         cinema = data.pop("cinemas", {})
         return cls(
             **data,
