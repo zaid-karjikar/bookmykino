@@ -2,6 +2,7 @@
 CREATE TABLE movies (
     id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     title      text NOT NULL UNIQUE,
+    title_de   text,
     poster_url text
 );
 
