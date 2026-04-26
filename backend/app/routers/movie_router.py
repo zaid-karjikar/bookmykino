@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
+from datetime import date
 from app.schemas.movie_schema import MovieResponse, ShowtimeResponse
 from app.services import movie_service
 from typing import List
@@ -12,5 +13,5 @@ def get_movies():
 
 
 @router.get("/{movie_id}/showtimes", response_model=List[ShowtimeResponse])
-def get_showtimes(movie_id: str):
-    return movie_service.get_showtimes_for_movie(movie_id)
+def get_showtimes(movie_id: str, date: date | None = Query(default=None)):
+    return movie_service.get_showtimes_for_movie(movie_id, date)
