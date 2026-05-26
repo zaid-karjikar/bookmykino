@@ -196,7 +196,7 @@ export default function MoviePage() {
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
               {showtime.price != null && (
                 <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>
-                  €{Number(showtime.price).toFixed(2)}
+                  from €{Number(showtime.price).toFixed(2)}
                 </span>
               )}
               {showtime.booking_url && (
