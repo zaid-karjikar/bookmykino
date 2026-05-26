@@ -38,6 +38,36 @@ def get_all_movies():
     ]
 
 
+def get_movie_by_id(movie_id: str):
+    berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
+    today = datetime.now(berlin_tz).date()
+    today_start = datetime.combine(today, datetime.min.time(), tzinfo=berlin_tz).isoformat()
+    today_end = datetime.combine(today, datetime.max.time(), tzinfo=berlin_tz).isoformat()
+
+    result = database.table("movies").select("id, title, poster_url").eq("id", movie_id).execute().data
+    if not result:
+        return None
+
+    movie = result[0]
+
+    showtimes_today = (
+        database.table("showtimes")
+        .select("movie_id")
+        .eq("movie_id", movie_id)
+        .gte("start_time", today_start)
+        .lte("start_time", today_end)
+        .execute()
+        .data
+    )
+
+    return MovieResponse(
+        id=movie["id"],
+        title=movie["title"],
+        poster_url=movie["poster_url"],
+        playing_today=len(showtimes_today) > 0,
+    )
+
+
 def get_showtimes_for_movie(movie_id: str, date: date_type | None = None):
     berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
 
