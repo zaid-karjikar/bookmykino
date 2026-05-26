@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
+from typing import List
 
 
 class MovieResponse(BaseModel):
@@ -8,6 +9,11 @@ class MovieResponse(BaseModel):
     title: str
     poster_url: str | None
     playing_today: bool
+
+
+class PaginatedMovieResponse(BaseModel):
+    items: List[MovieResponse]
+    total: int
 
 
 class ShowtimeResponse(BaseModel):

@@ -1,14 +1,6 @@
-import { useState, useEffect } from "react";
 import MovieCard from "./MovieCard";
 
-const PAGE_SIZE = 18;
-
-export default function MovieGrid({ movies, onMovieClick }) {
-  const [page, setPage] = useState(0);
-  useEffect(() => { setPage(0); }, [movies.length]);
-  const totalPages = Math.ceil(movies.length / PAGE_SIZE);
-  const visible = movies.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-
+export default function MovieGrid({ movies, onMovieClick, page, totalPages, onPageChange }) {
   return (
     <div>
       <div style={{
@@ -16,7 +8,7 @@ export default function MovieGrid({ movies, onMovieClick }) {
         gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
         gap: 8,
       }}>
-        {visible.map(movie => (
+        {movies.map(movie => (
           <MovieCard key={movie.id} movie={movie} onClick={() => onMovieClick(movie.id)} />
         ))}
       </div>
@@ -25,8 +17,9 @@ export default function MovieGrid({ movies, onMovieClick }) {
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 32 }}>
           {Array.from({ length: totalPages }).map((_, i) => (
             <button
+              type="button"
               key={i}
-              onClick={() => setPage(i)}
+              onClick={() => onPageChange(i)}
               style={{
                 width: 8,
                 height: 8,

@@ -4,7 +4,11 @@ from datetime import datetime, date as date_type
 import zoneinfo
 
 
-def get_all_movies():
+def get_all_movies(
+    limit: int | None = None,
+    offset: int = 0,
+    playing_today_only: bool = False,
+):
     berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
     today = datetime.now(berlin_tz).date()
     today_start = datetime.combine(
@@ -14,8 +18,6 @@ def get_all_movies():
         today, datetime.max.time(), tzinfo=berlin_tz
     ).isoformat()
 
-    movies = database.table("movies").select("id, title, poster_url").execute().data
-
     showtimes_today = (
         database.table("showtimes")
         .select("movie_id")
@@ -24,18 +26,33 @@ def get_all_movies():
         .execute()
         .data
     )
-
     movie_ids_today = {row["movie_id"] for row in showtimes_today}
 
-    return [
-        MovieResponse(
-            id=movie["id"],
-            title=movie["title"],
-            poster_url=movie["poster_url"],
-            playing_today=movie["id"] in movie_ids_today,
-        )
-        for movie in movies
-    ]
+    if playing_today_only and not movie_ids_today:
+        return {"items": [], "total": 0}
+
+    query = database.table("movies").select("id, title, poster_url", count="exact")
+
+    if playing_today_only:
+        query = query.in_("id", list(movie_ids_today))
+
+    if limit is not None:
+        query = query.range(offset, offset + limit - 1)
+
+    result = query.execute()
+
+    return {
+        "items": [
+            MovieResponse(
+                id=movie["id"],
+                title=movie["title"],
+                poster_url=movie["poster_url"],
+                playing_today=movie["id"] in movie_ids_today,
+            )
+            for movie in result.data
+        ],
+        "total": result.count or 0,
+    }
 
 
 def get_movie_by_id(movie_id: str):
