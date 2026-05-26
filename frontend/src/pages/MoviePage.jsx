@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getMovies, getShowtimes } from "../api";
+import { getMovie, getShowtimes } from "../api";
 import Navbar from "../components/Navbar";
 
 function getNext7Days() {
@@ -26,12 +26,8 @@ export default function MoviePage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch movie details from the movies list
   useEffect(() => {
-    getMovies().then(movies => {
-      const found = movies.find(m => m.id === id);
-      if (found) setMovie(found);
-    });
+    getMovie(id).then(setMovie).catch(() => {});
   }, [id]);
 
   useEffect(() => {

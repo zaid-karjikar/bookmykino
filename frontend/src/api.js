@@ -10,6 +10,15 @@ export async function getMovies() {
 }
 
 
+export async function getMovie(movieId) {
+    const response = await fetch(`${BASE_URL}/movies/${movieId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch movie');
+    }
+    return response.json();
+}
+
+
 export async function getShowtimes(movieId, date) {
     const url = date
         ? `${BASE_URL}/movies/${movieId}/showtimes?date=${date}`
