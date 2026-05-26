@@ -41,10 +41,20 @@ def get_all_movies():
 def get_movie_by_id(movie_id: str):
     berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
     today = datetime.now(berlin_tz).date()
-    today_start = datetime.combine(today, datetime.min.time(), tzinfo=berlin_tz).isoformat()
-    today_end = datetime.combine(today, datetime.max.time(), tzinfo=berlin_tz).isoformat()
+    today_start = datetime.combine(
+        today, datetime.min.time(), tzinfo=berlin_tz
+    ).isoformat()
+    today_end = datetime.combine(
+        today, datetime.max.time(), tzinfo=berlin_tz
+    ).isoformat()
 
-    result = database.table("movies").select("id, title, poster_url").eq("id", movie_id).execute().data
+    result = (
+        database.table("movies")
+        .select("id, title, poster_url")
+        .eq("id", movie_id)
+        .execute()
+        .data
+    )
     if not result:
         return None
 
@@ -72,13 +82,21 @@ def get_showtimes_for_movie(movie_id: str, date: date_type | None = None):
     berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
 
     if date:
-        day_start = datetime.combine(date, datetime.min.time(), tzinfo=berlin_tz).isoformat()
-        day_end = datetime.combine(date, datetime.max.time(), tzinfo=berlin_tz).isoformat()
-    
+        day_start = datetime.combine(
+            date, datetime.min.time(), tzinfo=berlin_tz
+        ).isoformat()
+        day_end = datetime.combine(
+            date, datetime.max.time(), tzinfo=berlin_tz
+        ).isoformat()
+
     else:
         today = datetime.now(berlin_tz).date()
-        day_start = datetime.combine(today, datetime.min.time(), tzinfo=berlin_tz).isoformat()
-        day_end = datetime.combine(today, datetime.max.time(), tzinfo=berlin_tz).isoformat()
+        day_start = datetime.combine(
+            today, datetime.min.time(), tzinfo=berlin_tz
+        ).isoformat()
+        day_end = datetime.combine(
+            today, datetime.max.time(), tzinfo=berlin_tz
+        ).isoformat()
 
     data = (
         database.table("showtimes")
