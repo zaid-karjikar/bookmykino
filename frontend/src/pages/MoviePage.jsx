@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { getMovie, getShowtimes } from "../api";
 import Navbar from "../components/Navbar";
 
@@ -21,23 +22,17 @@ export default function MoviePage() {
   const navigate = useNavigate();
   const days = getNext7Days();
   const [selectedDate, setSelectedDate] = useState(days[0].value);
-  const [movie, setMovie] = useState(null);
-  const [showtimes, setShowtimes] = useState([]);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const { data: movie } = useQuery({
+    queryKey: ["movie", id],
+    queryFn: () => getMovie(id),
+  });
 
-  useEffect(() => {
-    getMovie(id).then(setMovie).catch(() => {});
-  }, [id]);
+  const { data: showtimes = [], isLoading: loading, isError } = useQuery({
+    queryKey: ["showtimes", id, selectedDate],
+    queryFn: () => getShowtimes(id, selectedDate),
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    getShowtimes(id, selectedDate)
-      .then(setShowtimes)
-      .catch(() => setError("Failed to load showtimes"))
-      .finally(() => setLoading(false));
-  }, [id, selectedDate]);
+  const error = isError ? "Failed to load showtimes" : null;
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>

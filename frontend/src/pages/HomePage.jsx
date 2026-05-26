@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { getMovies } from "../api";
 import MovieRow from "../components/MovieRow";
 import MovieGrid from "../components/MovieGrid";
@@ -8,29 +9,25 @@ import Navbar from "../components/Navbar";
 const PAGE_SIZE = 18;
 
 export default function HomePage() {
-  const [playingToday, setPlayingToday] = useState([]);
-  const [allMovies, setAllMovies] = useState([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    getMovies({ playingToday: true })
-      .then(data => setPlayingToday(data.items))
-      .catch(() => setError("Failed to load movies"));
-  }, []);
+  const { data: playingTodayData, isError: playingTodayError } = useQuery({
+    queryKey: ["movies", "playing-today"],
+    queryFn: () => getMovies({ playingToday: true }),
+  });
 
-  useEffect(() => {
-    getMovies({ limit: PAGE_SIZE, offset: page * PAGE_SIZE })
-      .then(data => {
-        setAllMovies(data.items);
-        setTotal(data.total);
-      })
-      .catch(() => setError("Failed to load movies"));
-  }, [page]);
+  const { data: allMoviesData, isError: allMoviesError } = useQuery({
+    queryKey: ["movies", "all", page],
+    queryFn: () => getMovies({ limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
+  });
 
+  const playingToday = playingTodayData?.items ?? [];
+  const allMovies = allMoviesData?.items ?? [];
+  const total = allMoviesData?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const error = playingTodayError || allMoviesError;
+
   const handleMovieClick = (id) => navigate(`/movies/${id}`);
 
   const sectionHeadingStyle = {
@@ -46,21 +43,17 @@ export default function HomePage() {
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <Navbar />
       <div style={{ padding: "0 48px 64px" }}>
-        {error && <p style={{ color: "var(--red)", padding: "32px 0" }}>{error}</p>}
+        {error && <p style={{ color: "var(--red)", padding: "32px 0" }}>Failed to load movies</p>}
 
         {playingToday.length > 0 && (
           <section style={{ marginBottom: 48 }}>
-            <h2 style={sectionHeadingStyle}>
-              Playing Today
-            </h2>
+            <h2 style={sectionHeadingStyle}>Playing Today</h2>
             <MovieRow movies={playingToday} onMovieClick={handleMovieClick} />
           </section>
         )}
 
         <section>
-          <h2 style={sectionHeadingStyle}>
-            All Movies
-          </h2>
+          <h2 style={sectionHeadingStyle}>All Movies</h2>
           <MovieGrid
             movies={allMovies}
             onMovieClick={handleMovieClick}
