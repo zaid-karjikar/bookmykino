@@ -13,16 +13,16 @@ class MovieResponse(BaseModel):
 class ShowtimeResponse(BaseModel):
     id: UUID
     start_time: datetime
-    price: float
+    price: float | None
     booking_url: str | None
     cinema_name: str
     location_hint: str | None
 
     @classmethod
     def from_database(cls, data: dict):
-        cinema = data.pop("cinemas", {})
+        cinema = data.get("cinemas", {})
         return cls(
-            **data,
+            **{k: v for k, v in data.items() if k != "cinemas"},
             cinema_name=cinema.get("name"),
             location_hint=cinema.get("location_hint")
         )
