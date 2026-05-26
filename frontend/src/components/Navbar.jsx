@@ -1,7 +1,4 @@
-import { useNavigate } from "react-router-dom";
-
 export default function Navbar() {
-  const navigate = useNavigate();
   return (
     <nav style={{
       position: "sticky",
@@ -14,18 +11,18 @@ export default function Navbar() {
       background: "linear-gradient(to bottom, #000000cc, transparent)",
       backdropFilter: "blur(8px)",
     }}>
-      <span
-        onClick={() => navigate("/")}
+      <a
+        href="/"
         style={{
           fontFamily: "var(--font-display)",
           fontSize: 28,
           letterSpacing: 2,
           color: "var(--red)",
-          cursor: "pointer",
+          textDecoration: "none",
         }}
       >
         BOOKMYKINO
-      </span>
+      </a>
     </nav>
   );
 }

@@ -96,6 +96,7 @@ export default function MoviePage() {
           )}
           <div>
             <button
+              type="button"
               onClick={() => navigate("/")}
               style={{
                 background: "none",
@@ -132,6 +133,7 @@ export default function MoviePage() {
         <div style={{ display: "flex", gap: 8, marginBottom: 32, flexWrap: "wrap" }}>
           {days.map(day => (
             <button
+              type="button"
               key={day.value}
               onClick={() => setSelectedDate(day.value)}
               style={{
