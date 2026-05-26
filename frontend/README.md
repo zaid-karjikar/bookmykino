@@ -1,16 +1,26 @@
-# React + Vite
+# BookMyKino Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend for BookMyKino — browse movies playing in Berlin cinemas, filter by date, and book tickets.
 
-Currently, two official plugins are available:
+## Tech stack
+- **Framework:** React 19 + Vite
+- **Routing:** React Router v7
+- **Data fetching / caching:** TanStack React Query
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Running locally
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+## Environment variables
+Copy `.env.example` to `.env`:
+```
+VITE_API_URL=http://localhost:8000
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+If `VITE_API_URL` is not set, the app defaults to `http://localhost:8000`.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Pages
+- `/` — Home: "Playing Today" row + paginated "All Movies" grid
+- `/movies/:id` — Movie detail: hero banner, date selector, showtimes list with booking links

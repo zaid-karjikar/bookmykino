@@ -1,25 +1,48 @@
 # BookMyKino API
 
-A FastAPI backend for BookMyKino, a cinema movies discovery platform for Berlin, Germany.
+FastAPI backend for BookMyKino — a cinema movie discovery platform for Berlin.
 
-## What it does
-Two endpoints:
-- `GET /movies` - returns all movies (id, title, poster_url)
-- `GET /movies/{id}/showtimes` - returns showtimes for a movie, sorted by time, with cinema name, location hint, and booking URL
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/movies/` | Paginated movie list |
+| `GET` | `/movies/{id}` | Single movie by ID |
+| `GET` | `/movies/{id}/showtimes` | Showtimes for a movie, filtered by date |
+
+### `GET /movies/` query params
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | int | — | Max results to return (1–200) |
+| `offset` | int | 0 | Number of results to skip |
+| `playing_today` | bool | false | Only return movies with showtimes today |
+
+Response: `{ "items": [...], "total": <int> }`
+
+### `GET /movies/{id}/showtimes` query params
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `date` | date | today | Filter showtimes to this date (`YYYY-MM-DD`) |
 
 ## Tech stack
 - **Framework:** FastAPI
 - **Database:** Supabase (PostgreSQL)
+- **Timezone:** All "today" logic uses Europe/Berlin
 
 ## Data model
-- **movies** - id, title, poster_url
-- **cinemas** - id, name, location_hint
-- **showtimes** - id, movie_id, cinema_id, start_time, price, booking_url
+- **movies** — id, title, poster_url
+- **cinemas** — id, name, location_hint
+- **showtimes** — id, movie_id, cinema_id, start_time, price, booking_url
 
 ## Running locally
 ```bash
 uvicorn app.main:app --reload
 ```
+
 ## Environment variables
+Copy `.env.example` to `.env` and fill in the values:
+```
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
