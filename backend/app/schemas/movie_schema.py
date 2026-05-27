@@ -21,8 +21,9 @@ class ShowtimeResponse(BaseModel):
     start_time: datetime
     price: float | None
     booking_url: str | None
-    cinema_name: str
+    cinema_name: str | None
     location_hint: str | None
+    language_version: str | None
 
     @classmethod
     def from_database(cls, data: dict):

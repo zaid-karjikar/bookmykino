@@ -3,20 +3,22 @@ from app.schemas.movie_schema import MovieResponse, ShowtimeResponse
 from datetime import datetime, date as date_type
 import zoneinfo
 
+BERLIN_TZ = zoneinfo.ZoneInfo("Europe/Berlin")
+
+
+def _day_range(d: date_type) -> tuple[str, str]:
+    start = datetime.combine(d, datetime.min.time(), tzinfo=BERLIN_TZ).isoformat()
+    end = datetime.combine(d, datetime.max.time(), tzinfo=BERLIN_TZ).isoformat()
+    return start, end
+
 
 def get_all_movies(
     limit: int | None = None,
     offset: int = 0,
     playing_today_only: bool = False,
 ):
-    berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
-    today = datetime.now(berlin_tz).date()
-    today_start = datetime.combine(
-        today, datetime.min.time(), tzinfo=berlin_tz
-    ).isoformat()
-    today_end = datetime.combine(
-        today, datetime.max.time(), tzinfo=berlin_tz
-    ).isoformat()
+    today = datetime.now(BERLIN_TZ).date()
+    today_start, today_end = _day_range(today)
 
     showtimes_today = (
         database.table("showtimes")
@@ -56,14 +58,8 @@ def get_all_movies(
 
 
 def get_movie_by_id(movie_id: str):
-    berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
-    today = datetime.now(berlin_tz).date()
-    today_start = datetime.combine(
-        today, datetime.min.time(), tzinfo=berlin_tz
-    ).isoformat()
-    today_end = datetime.combine(
-        today, datetime.max.time(), tzinfo=berlin_tz
-    ).isoformat()
+    today = datetime.now(BERLIN_TZ).date()
+    today_start, today_end = _day_range(today)
 
     result = (
         database.table("movies")
@@ -96,28 +92,13 @@ def get_movie_by_id(movie_id: str):
 
 
 def get_showtimes_for_movie(movie_id: str, date: date_type | None = None):
-    berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
-
-    if date:
-        day_start = datetime.combine(
-            date, datetime.min.time(), tzinfo=berlin_tz
-        ).isoformat()
-        day_end = datetime.combine(
-            date, datetime.max.time(), tzinfo=berlin_tz
-        ).isoformat()
-
-    else:
-        today = datetime.now(berlin_tz).date()
-        day_start = datetime.combine(
-            today, datetime.min.time(), tzinfo=berlin_tz
-        ).isoformat()
-        day_end = datetime.combine(
-            today, datetime.max.time(), tzinfo=berlin_tz
-        ).isoformat()
+    day_start, day_end = _day_range(date or datetime.now(BERLIN_TZ).date())
 
     data = (
         database.table("showtimes")
-        .select("id, start_time, price, booking_url, cinemas(name, location_hint)")
+        .select(
+            "id, start_time, price, booking_url, language_version, cinemas(name, location_hint)"
+        )
         .eq("movie_id", movie_id)
         .gte("start_time", day_start)
         .lte("start_time", day_end)

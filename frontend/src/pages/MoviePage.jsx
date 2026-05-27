@@ -194,6 +194,20 @@ export default function MoviePage() {
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              {showtime.language_version && (
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: 0.5,
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 2,
+                  padding: "2px 6px",
+                  textTransform: "uppercase",
+                }}>
+                  {showtime.language_version}
+                </span>
+              )}
               {showtime.price != null && (
                 <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>
                   from €{Number(showtime.price).toFixed(2)}

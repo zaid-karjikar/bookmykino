@@ -1,6 +1,10 @@
 from fastapi import APIRouter, HTTPException, Query
 from datetime import date
-from app.schemas.movie_schema import MovieResponse, ShowtimeResponse, PaginatedMovieResponse
+from app.schemas.movie_schema import (
+    MovieResponse,
+    ShowtimeResponse,
+    PaginatedMovieResponse,
+)
 from app.services import movie_service
 from typing import List
 
