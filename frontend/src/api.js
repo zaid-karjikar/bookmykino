@@ -8,7 +8,7 @@ export async function getMovies({ limit, offset, playingToday, languageVersion }
     if (playingToday) params.set('playing_today', 'true');
     if (languageVersion) params.set('language_version', languageVersion);
     const query = params.toString() ? `?${params}` : '';
-    const response = await fetch(`${BASE_URL}/movies${query}`);
+    const response = await fetch(`${BASE_URL}/movies/${query}`);
     if (!response.ok) {
         throw new Error('Failed to fetch movies');
     }
