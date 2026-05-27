@@ -15,10 +15,11 @@ CREATE TABLE cinemas (
 
 -- showtimes
 CREATE TABLE showtimes (
-    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    movie_id    uuid REFERENCES movies(id) ON DELETE CASCADE,
-    cinema_id   uuid REFERENCES cinemas(id) ON DELETE CASCADE,
-    start_time  timestamptz NOT NULL,
-    price       numeric(6,2) NOT NULL,
-    booking_url text UNIQUE
+    id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    movie_id         uuid REFERENCES movies(id) ON DELETE CASCADE,
+    cinema_id        uuid REFERENCES cinemas(id) ON DELETE CASCADE,
+    start_time       timestamptz NOT NULL,
+    price            numeric(6,2),
+    booking_url      text UNIQUE,
+    language_version text
 );
