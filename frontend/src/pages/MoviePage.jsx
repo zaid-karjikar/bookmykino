@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMovie, getShowtimes } from "../api";
 import Navbar from "../components/Navbar";
+import { langLabel } from "../lang";
 
 function getNext7Days() {
   const days = [];
@@ -20,17 +21,36 @@ function getNext7Days() {
 export default function MoviePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const days = getNext7Days();
   const [selectedDate, setSelectedDate] = useState(days[0].value);
+  const [selectedLang, setSelectedLang] = useState(searchParams.get("language_version"));
+
   const { data: movie } = useQuery({
     queryKey: ["movie", id],
     queryFn: () => getMovie(id),
   });
 
-  const { data: showtimes = [], isLoading: loading, isError } = useQuery({
+  const { data: allShowtimes = [], isLoading: loading, isError } = useQuery({
     queryKey: ["showtimes", id, selectedDate],
     queryFn: () => getShowtimes(id, selectedDate),
   });
+
+  const availableLangs = useMemo(() => {
+    const langs = new Set(allShowtimes.map((s) => s.language_version).filter(Boolean));
+    return [...langs].sort();
+  }, [allShowtimes]);
+
+  const showtimes = useMemo(
+    () => selectedLang ? allShowtimes.filter((s) => s.language_version === selectedLang) : allShowtimes,
+    [allShowtimes, selectedLang]
+  );
+
+  const handleLangSelect = (lang) => {
+    setSelectedLang(lang);
+    if (lang) setSearchParams({ language_version: lang });
+    else setSearchParams({});
+  };
 
   const error = isError ? "Failed to load showtimes" : null;
 
@@ -124,6 +144,41 @@ export default function MoviePage() {
       {/* Showtimes section */}
       <div style={{ padding: "0 48px 64px" }}>
 
+        {/* Language filter */}
+        {availableLangs.length > 0 && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => handleLangSelect(null)}
+              style={{
+                padding: "6px 16px", borderRadius: 2, fontSize: 12, fontWeight: 600,
+                letterSpacing: 0.5, cursor: "pointer", transition: "all 0.15s ease",
+                border: !selectedLang ? "1px solid var(--red)" : "1px solid var(--border)",
+                background: !selectedLang ? "var(--red)" : "transparent",
+                color: "#fff",
+              }}
+            >
+              Any
+            </button>
+            {availableLangs.map((lang) => (
+              <button
+                type="button"
+                key={lang}
+                onClick={() => handleLangSelect(lang)}
+                style={{
+                  padding: "6px 16px", borderRadius: 2, fontSize: 12, fontWeight: 600,
+                  letterSpacing: 0.5, cursor: "pointer", transition: "all 0.15s ease",
+                  border: selectedLang === lang ? "1px solid var(--red)" : "1px solid var(--border)",
+                  background: selectedLang === lang ? "var(--red)" : "transparent",
+                  color: "#fff",
+                }}
+              >
+                {langLabel(lang)}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Date selector */}
         <div style={{ display: "flex", gap: 8, marginBottom: 32, flexWrap: "wrap" }}>
           {days.map(day => (
@@ -205,7 +260,7 @@ export default function MoviePage() {
                   padding: "2px 6px",
                   textTransform: "uppercase",
                 }}>
-                  {showtime.language_version}
+                  {langLabel(showtime.language_version)}
                 </span>
               )}
               {showtime.price != null && (

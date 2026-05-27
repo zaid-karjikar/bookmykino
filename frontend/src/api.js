@@ -1,11 +1,12 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 
-export async function getMovies({ limit, offset, playingToday } = {}) {
+export async function getMovies({ limit, offset, playingToday, languageVersion } = {}) {
     const params = new URLSearchParams();
     if (limit != null) params.set('limit', limit);
     if (offset != null && offset !== 0) params.set('offset', offset);
     if (playingToday) params.set('playing_today', 'true');
+    if (languageVersion) params.set('language_version', languageVersion);
     const query = params.toString() ? `?${params}` : '';
     const response = await fetch(`${BASE_URL}/movies${query}`);
     if (!response.ok) {
@@ -24,11 +25,12 @@ export async function getMovie(movieId) {
 }
 
 
-export async function getShowtimes(movieId, date) {
-    const url = date
-        ? `${BASE_URL}/movies/${movieId}/showtimes?date=${date}`
-        : `${BASE_URL}/movies/${movieId}/showtimes`;
-    const response = await fetch(url);
+export async function getShowtimes(movieId, date, languageVersion) {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (languageVersion) params.set('language_version', languageVersion);
+    const query = params.toString() ? `?${params}` : '';
+    const response = await fetch(`${BASE_URL}/movies/${movieId}/showtimes${query}`);
     if (!response.ok) {
         throw new Error('Failed to fetch showtimes');
     }

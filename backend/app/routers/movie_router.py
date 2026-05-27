@@ -6,7 +6,6 @@ from app.schemas.movie_schema import (
     PaginatedMovieResponse,
 )
 from app.services import movie_service
-from typing import List
 
 router = APIRouter(prefix="/movies", tags=["Movies"])
 
@@ -16,9 +15,13 @@ def get_movies(
     limit: int | None = Query(default=None, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     playing_today: bool = Query(default=False),
+    language_version: str | None = Query(default=None),
 ):
     return movie_service.get_all_movies(
-        limit=limit, offset=offset, playing_today_only=playing_today
+        limit=limit,
+        offset=offset,
+        playing_today_only=playing_today,
+        language_version=language_version,
     )
 
 
@@ -30,6 +33,10 @@ def get_movie(movie_id: str):
     return movie
 
 
-@router.get("/{movie_id}/showtimes", response_model=List[ShowtimeResponse])
-def get_showtimes(movie_id: str, date: date | None = Query(default=None)):
-    return movie_service.get_showtimes_for_movie(movie_id, date)
+@router.get("/{movie_id}/showtimes", response_model=list[ShowtimeResponse])
+def get_showtimes(
+    movie_id: str,
+    date: date | None = Query(default=None),
+    language_version: str | None = Query(default=None),
+):
+    return movie_service.get_showtimes_for_movie(movie_id, date, language_version)
