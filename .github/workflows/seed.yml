@@ -1,0 +1,48 @@
+name: Refresh demo schedule
+
+# The upstream CinemaxX scrape is disabled (Cloudflare bot protection), so the
+# deployed demo would otherwise show an empty "Playing Today" shelf and dead
+# movie pages once the last real snapshot expired. This job regenerates a
+# rolling 7-day demo schedule so the app stays browsable.
+#
+# Runs daily rather than weekly on purpose: the window is 7 days long, so a
+# weekly cadence would leave only a single day of listings by the end of it.
+#
+# The script only ever deletes rows it created (identified by a marker in
+# booking_url); real scraped showtimes are left alone.
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # 04:00 UTC — before Berlin opening hours
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Window length in days"
+        required: false
+        default: "7"
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Matches backend/.python-version. 3.14 cannot install pyiceberg, a
+          # transitive dependency of the Supabase client.
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install supabase python-dotenv
+
+      - name: Seed demo schedule
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: python seed.py --days "${{ inputs.days || '7' }}"
