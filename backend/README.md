@@ -49,10 +49,35 @@ publishes no wheel for it and fails to build from source.
 uvicorn app.main:app --reload
 ```
 
+## Seeding
+
+`seed.py` generates the rolling demo schedule described in the
+[root README](../README.md#data-status). Showtimes are generated; movies and
+posters are real.
+
+```bash
+python seed.py                # rolling 7-day window
+python seed.py --days 14      # longer window
+python seed.py --dry-run      # print the plan, write nothing
+python seed.py --with-movies  # also insert seed_movies.json if the table is empty
+```
+
+It is deterministic per (movie, day), so re-running mid-window is a no-op
+rather than a reshuffle. Rows are upserted on the `booking_url` unique
+constraint, and only rows carrying the demo marker in that URL are ever
+deleted — real scraped showtimes are left alone.
+
+Writes prefer `SUPABASE_SERVICE_ROLE_KEY` and fall back to the anon key. If
+row-level security is enabled on `showtimes`, the anon key will not be able to
+insert or delete and you will need the service role key.
+
 ## Environment variables
 Copy `.env.example` to `.env` and fill in the values:
 ```
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
 ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+
+# Optional. Needed for seeding if RLS is enabled on the showtimes table.
+SUPABASE_SERVICE_ROLE_KEY=
 ```
