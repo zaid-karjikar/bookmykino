@@ -12,11 +12,28 @@ def _day_range(d: date_type) -> tuple[str, str]:
     return start, end
 
 
+def _ilike_pattern(term: str) -> str:
+    """Build a PostgREST-safe quoted ILIKE pattern for use inside an `or` filter.
+
+    Two layers of escaping are required:
+
+    1. LIKE wildcards (% and _) typed by the user must match literally, so they
+       get a backslash prefix (Postgres' default LIKE escape character).
+    2. The result is wrapped in double quotes, because PostgREST reads commas
+       and parentheses as `or=(...)` structure. Inside quotes it unescapes \\"
+       and \\\\, so every backslash produced by step 1 has to be doubled.
+    """
+    literal = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    escaped = f"%{literal}%".replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
 def get_all_movies(
     limit: int | None = None,
     offset: int = 0,
     playing_today_only: bool = False,
     language_version: str | None = None,
+    search: str | None = None,
 ):
     today = datetime.now(BERLIN_TZ).date()
     today_start, today_end = _day_range(today)
@@ -39,6 +56,12 @@ def get_all_movies(
     if playing_today_only:
         query = query.in_("id", list(movie_ids_today))
 
+    # Match either the original title or the German release title, since a
+    # Berlin audience searches for both.
+    if search and search.strip():
+        pattern = _ilike_pattern(search.strip())
+        query = query.or_(f"title.ilike.{pattern},title_de.ilike.{pattern}")
+
     if language_version:
         lang_filter_rows = (
             database.table("showtimes")
@@ -52,6 +75,10 @@ def get_all_movies(
         if not lang_movie_ids:
             return {"items": [], "total": 0}
         query = query.in_("id", list(lang_movie_ids))
+
+    # Explicit ordering — without it Postgres gives no stable row order and
+    # paging can repeat or skip movies between requests.
+    query = query.order("title")
 
     if limit is not None:
         query = query.range(offset, offset + limit - 1)

@@ -27,6 +27,7 @@ get_movie_by_id:
 get_showtimes_for_movie:
   1. showtimes query        → list of rows
 """
+
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
@@ -66,6 +67,7 @@ def _showtime_row(movie_id=MOVIE_ID_1, lang="OV"):
 # _day_range
 # ---------------------------------------------------------------------------
 
+
 class TestDayRange:
     def test_returns_two_strings(self):
         start, end = movie_service._day_range(date(2026, 5, 27))
@@ -91,6 +93,7 @@ class TestDayRange:
 # ---------------------------------------------------------------------------
 # get_all_movies
 # ---------------------------------------------------------------------------
+
 
 class TestGetAllMovies:
     def test_returns_empty_when_no_movies(self, mock_db):
@@ -191,11 +194,13 @@ class TestGetAllMovies:
         # 2) movies query
         mock_db.queue([movie_row], count=1)
         # 3) lang_versions batch — same language appears twice
-        mock_db.queue([
-            {"movie_id": MOVIE_ID_1, "language_version": "OV"},
-            {"movie_id": MOVIE_ID_1, "language_version": "OV"},
-            {"movie_id": MOVIE_ID_1, "language_version": "DE"},
-        ])
+        mock_db.queue(
+            [
+                {"movie_id": MOVIE_ID_1, "language_version": "OV"},
+                {"movie_id": MOVIE_ID_1, "language_version": "OV"},
+                {"movie_id": MOVIE_ID_1, "language_version": "DE"},
+            ]
+        )
 
         result = movie_service.get_all_movies()
 
@@ -211,10 +216,12 @@ class TestGetAllMovies:
         # 2) movies query
         mock_db.queue([row1, row2], count=2)
         # 3) lang_versions batch
-        mock_db.queue([
-            {"movie_id": MOVIE_ID_1, "language_version": "OV"},
-            {"movie_id": MOVIE_ID_2, "language_version": "DE"},
-        ])
+        mock_db.queue(
+            [
+                {"movie_id": MOVIE_ID_1, "language_version": "OV"},
+                {"movie_id": MOVIE_ID_2, "language_version": "DE"},
+            ]
+        )
 
         result = movie_service.get_all_movies()
 
@@ -222,10 +229,120 @@ class TestGetAllMovies:
         assert items_by_id[MOVIE_ID_1].language_versions == ["OV"]
         assert items_by_id[MOVIE_ID_2].language_versions == ["DE"]
 
+    def test_results_are_ordered_for_stable_pagination(self, mock_db):
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row()], count=1)
+        mock_db.queue([])
+
+        movie_service.get_all_movies(limit=10)
+
+        assert mock_db.calls_to("order"), "movies query must specify an order"
+
+
+# ---------------------------------------------------------------------------
+# _ilike_pattern  (search escaping)
+# ---------------------------------------------------------------------------
+
+
+class TestIlikePattern:
+    """PostgREST reads commas/parens as `or=(...)` structure and Postgres reads
+    % and _ as LIKE wildcards, so both need neutralising in user input."""
+
+    def test_wraps_in_quotes_and_wildcards(self):
+        assert movie_service._ilike_pattern("dune") == '"%dune%"'
+
+    def test_comma_stays_inside_the_quoted_value(self):
+        # An unquoted comma would split the or() filter into a bogus condition.
+        result = movie_service._ilike_pattern("hello,world")
+        assert result == '"%hello,world%"'
+        assert result.startswith('"') and result.endswith('"')
+
+    def test_parenthesis_is_contained(self):
+        result = movie_service._ilike_pattern("movie (2026)")
+        assert result == '"%movie (2026)%"'
+
+    def test_percent_is_escaped_as_literal(self):
+        # Must reach Postgres as \% so it matches a literal percent sign.
+        assert movie_service._ilike_pattern("100%") == '"%100\\\\%%"'
+
+    def test_underscore_is_escaped_as_literal(self):
+        assert movie_service._ilike_pattern("a_b") == '"%a\\\\_b%"'
+
+    def test_double_quote_is_escaped(self):
+        # A raw " would terminate the quoted value early.
+        result = movie_service._ilike_pattern('say "hi"')
+        assert result == '"%say \\"hi\\"%"'
+
+    def test_backslash_is_escaped(self):
+        assert movie_service._ilike_pattern("a\\b") == '"%a\\\\\\\\b%"'
+
+
+class TestGetAllMoviesSearch:
+    def test_search_applies_or_filter_on_both_titles(self, mock_db):
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row(title="Dune")], count=1)
+        mock_db.queue([])
+
+        movie_service.get_all_movies(search="dune")
+
+        or_calls = mock_db.calls_to("or_")
+        assert len(or_calls) == 1
+        expr = or_calls[0][0][0]
+        assert expr == 'title.ilike."%dune%",title_de.ilike."%dune%"'
+
+    def test_search_is_skipped_when_blank(self, mock_db):
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row()], count=1)
+        mock_db.queue([])
+
+        movie_service.get_all_movies(search="   ")
+
+        assert mock_db.calls_to("or_") == []
+
+    def test_search_is_skipped_when_none(self, mock_db):
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row()], count=1)
+        mock_db.queue([])
+
+        movie_service.get_all_movies(search=None)
+
+        assert mock_db.calls_to("or_") == []
+
+    def test_search_term_is_trimmed(self, mock_db):
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row()], count=1)
+        mock_db.queue([])
+
+        movie_service.get_all_movies(search="  dune  ")
+
+        expr = mock_db.calls_to("or_")[0][0][0]
+        assert expr == 'title.ilike."%dune%",title_de.ilike."%dune%"'
+
+    def test_search_returns_empty_result_set_cleanly(self, mock_db):
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([], count=0)
+
+        result = movie_service.get_all_movies(search="nonexistent")
+
+        assert result["items"] == []
+        assert result["total"] == 0
+
+    def test_search_composes_with_playing_today(self, mock_db):
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row(title="Dune")], count=1)
+        mock_db.queue([{"movie_id": MOVIE_ID_1, "language_version": "OV"}])
+
+        result = movie_service.get_all_movies(playing_today_only=True, search="dune")
+
+        assert mock_db.calls_to("or_")
+        assert mock_db.calls_to("in_")
+        assert result["items"][0].playing_today is True
+
 
 # ---------------------------------------------------------------------------
 # get_movie_by_id
 # ---------------------------------------------------------------------------
+
 
 class TestGetMovieById:
     def test_returns_none_when_not_found(self, mock_db):
@@ -269,6 +386,7 @@ class TestGetMovieById:
 # get_showtimes_for_movie
 # ---------------------------------------------------------------------------
 
+
 class TestGetShowtimesForMovie:
     def test_returns_empty_list_when_no_showtimes(self, mock_db):
         mock_db.queue([])
@@ -299,7 +417,9 @@ class TestGetShowtimesForMovie:
         # when the DB returns only OV rows, the result contains only OV.
         mock_db.queue([_showtime_row(lang="OV")])
 
-        result = movie_service.get_showtimes_for_movie(MOVIE_ID_1, language_version="OV")
+        result = movie_service.get_showtimes_for_movie(
+            MOVIE_ID_1, language_version="OV"
+        )
 
         assert all(st.language_version == "OV" for st in result)
 

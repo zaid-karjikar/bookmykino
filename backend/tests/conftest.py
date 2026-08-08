@@ -4,6 +4,7 @@ conftest.py — shared fixtures and mock DB infrastructure.
 Env vars are set before any app import so that pydantic-settings (Settings())
 doesn't raise a validation error during collection.
 """
+
 import os
 
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
@@ -15,10 +16,10 @@ from unittest.mock import MagicMock
 
 from app.main import app
 
-
 # ---------------------------------------------------------------------------
 # Fluent mock database
 # ---------------------------------------------------------------------------
+
 
 class MockQueryBuilder:
     """
@@ -30,13 +31,17 @@ class MockQueryBuilder:
     own pre-configured response.
     """
 
-    def __init__(self, queue: list):
+    def __init__(self, queue: list, calls: list):
         self._queue = queue
+        self._calls = calls
 
-    # Catch-all: any unknown attribute → a callable that returns self
+    # Catch-all: any unknown attribute → a callable that records the call and
+    # returns self, so tests can assert which filters a service applied.
     def __getattr__(self, name):
         def method(*args, **kwargs):
+            self._calls.append((name, args, kwargs))
             return self
+
         return method
 
     def execute(self):
@@ -58,21 +63,30 @@ class MockDatabase:
 
     def __init__(self):
         self._results: list[dict] = []
+        self.calls: list[tuple] = []
 
     def table(self, name: str) -> MockQueryBuilder:
-        return MockQueryBuilder(self._results)
+        self.calls.append(("table", (name,), {}))
+        return MockQueryBuilder(self._results, self.calls)
 
     def queue(self, data: list, count: int | None = None) -> None:
         """Enqueue the payload for the next execute() call."""
-        self._results.append({
-            "data": data,
-            "count": count if count is not None else len(data),
-        })
+        self._results.append(
+            {
+                "data": data,
+                "count": count if count is not None else len(data),
+            }
+        )
+
+    def calls_to(self, method: str) -> list[tuple]:
+        """Every (args, kwargs) pair recorded for a given builder method."""
+        return [(args, kwargs) for name, args, kwargs in self.calls if name == method]
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_db(monkeypatch):

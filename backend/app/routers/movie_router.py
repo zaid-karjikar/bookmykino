@@ -16,12 +16,14 @@ def get_movies(
     offset: int = Query(default=0, ge=0),
     playing_today: bool = Query(default=False),
     language_version: str | None = Query(default=None),
+    search: str | None = Query(default=None, max_length=100),
 ):
     return movie_service.get_all_movies(
         limit=limit,
         offset=offset,
         playing_today_only=playing_today,
         language_version=language_version,
+        search=search,
     )
 
 
