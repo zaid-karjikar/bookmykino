@@ -596,3 +596,36 @@ button {
 .status--error {
   color: var(--red);
 }
+
+/* Demo-data disclosure. Deliberately low-contrast: it should be findable and
+   honest without competing with the listings themselves. */
+.demo-notice {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  border-left: 2px solid var(--border);
+  padding: 2px 0 2px 12px;
+  margin-bottom: 24px;
+}
+
+.demo-notice__tag {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.demo-notice a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .demo-notice a:hover {
+    color: var(--text-primary);
+  }
+}
