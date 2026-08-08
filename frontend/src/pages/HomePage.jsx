@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getMovies } from "../api";
@@ -6,6 +6,7 @@ import MovieRow from "../components/MovieRow";
 import MovieGrid from "../components/MovieGrid";
 import MovieGridSkeleton from "../components/MovieGridSkeleton";
 import Navbar from "../components/Navbar";
+import DemoNotice from "../components/DemoNotice";
 import { langLabel } from "../lang";
 
 const PAGE_SIZE = 18;
@@ -14,7 +15,6 @@ const SEARCH_DEBOUNCE_MS = 300;
 export default function HomePage() {
   const [page, setPage] = useState(0);
   const [selectedLang, setSelectedLang] = useState(null);
-  const [availableLangs, setAvailableLangs] = useState([]);
   // `searchInput` tracks the field so typing stays responsive; `search` is the
   // debounced value that actually drives the query.
   const [searchInput, setSearchInput] = useState("");
@@ -43,18 +43,22 @@ export default function HomePage() {
     placeholderData: keepPreviousData,
   });
 
-  // Populate chip options from unfiltered data; keep them visible while a
-  // filter or search is narrowing the results.
-  useEffect(() => {
-    if (!selectedLang && !search && allMoviesData?.items) {
-      const langs = new Set();
-      allMoviesData.items.forEach((m) =>
-        (m.language_versions || []).forEach((lv) => langs.add(lv))
-      );
-      const sorted = [...langs].sort();
-      if (sorted.length > 0) setAvailableLangs(sorted);
-    }
-  }, [allMoviesData, selectedLang, search]);
+  // Chip options come from the *unfiltered* page, so narrowing by language or
+  // search never removes the chips you need to widen again. When no filter is
+  // active this key is identical to the query above, so React Query serves it
+  // from the same cache entry rather than issuing a second request.
+  const { data: unfilteredData } = useQuery({
+    queryKey: ["movies", "all", page, null, ""],
+    queryFn: () => getMovies({ limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
+  });
+
+  const availableLangs = useMemo(() => {
+    const langs = new Set();
+    (unfilteredData?.items ?? []).forEach((m) =>
+      (m.language_versions || []).forEach((lv) => langs.add(lv))
+    );
+    return [...langs].sort();
+  }, [unfilteredData]);
 
   const playingToday = playingTodayData?.items ?? [];
   const allMovies = allMoviesData?.items ?? [];
@@ -99,6 +103,8 @@ export default function HomePage() {
     <div className="page">
       <Navbar />
       <div className="page-body">
+        <DemoNotice />
+
         {error && <p className="status status--error">Failed to load movies</p>}
 
         {/* A search narrows the whole page, so the curated shelf steps aside. */}
