@@ -305,6 +305,58 @@ button {
 }
 
 /* ------------------------------------------------------------------ */
+/* Loading skeletons                                                   */
+/* ------------------------------------------------------------------ */
+
+/* The API is on a free tier that sleeps when idle, so a first request can
+   take the better part of a minute. Skeletons make that read as loading
+   rather than as an empty catalog. */
+.skeleton {
+  border-radius: 4px;
+  aspect-ratio: 2 / 3;
+  background: linear-gradient(
+    100deg,
+    var(--bg-card) 30%,
+    #333 50%,
+    var(--bg-card) 70%
+  );
+  background-size: 250% 100%;
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-sweep {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* Only worth explaining if the wait is actually long, so it fades in after a
+   few seconds. Done in CSS to avoid a timer and a state update per render. */
+.loading-note {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 20px;
+  opacity: 0;
+  animation: loading-note-in 0.4s ease 4s forwards;
+}
+
+@keyframes loading-note-in {
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-note {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Pagination                                                          */
 /* ------------------------------------------------------------------ */
 

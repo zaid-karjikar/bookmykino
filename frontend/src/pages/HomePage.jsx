@@ -4,6 +4,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getMovies } from "../api";
 import MovieRow from "../components/MovieRow";
 import MovieGrid from "../components/MovieGrid";
+import MovieGridSkeleton from "../components/MovieGridSkeleton";
 import Navbar from "../components/Navbar";
 import { langLabel } from "../lang";
 
@@ -28,7 +29,7 @@ export default function HomePage() {
     queryFn: () => getMovies({ playingToday: true }),
   });
 
-  const { data: allMoviesData, isError: allMoviesError } = useQuery({
+  const { data: allMoviesData, isError: allMoviesError, isPending: allMoviesPending } = useQuery({
     queryKey: ["movies", "all", page, selectedLang, search],
     queryFn: () =>
       getMovies({
@@ -147,7 +148,15 @@ export default function HomePage() {
             </div>
           )}
 
-          {!error && allMovies.length === 0 ? (
+          {allMoviesPending ? (
+            <>
+              <MovieGridSkeleton />
+              <p className="loading-note">
+                Waking the server — the API sleeps when idle, so the first load can
+                take up to a minute.
+              </p>
+            </>
+          ) : !error && allMovies.length === 0 ? (
             <p className="status">
               {isSearching ? `No movies match "${search.trim()}".` : "No movies to show."}
             </p>
