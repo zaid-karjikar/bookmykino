@@ -101,6 +101,61 @@ button {
 }
 
 /* ------------------------------------------------------------------ */
+/* Search                                                              */
+/* ------------------------------------------------------------------ */
+
+.search {
+  position: relative;
+  max-width: 420px;
+  margin-bottom: 16px;
+}
+
+.search__input {
+  width: 100%;
+  padding: 11px 40px 11px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  transition: border-color 0.15s ease;
+}
+
+.search__input::placeholder {
+  color: var(--text-muted);
+}
+
+.search__input:focus {
+  border-color: var(--red);
+}
+
+/* The native control duplicates the custom clear button below. */
+.search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search__clear {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+}
+
+@media (hover: hover) {
+  .search__clear:hover {
+    color: var(--text-primary);
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Chips (language / filter pills)                                     */
 /* ------------------------------------------------------------------ */
 

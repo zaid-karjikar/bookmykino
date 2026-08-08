@@ -1,12 +1,13 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 
-export async function getMovies({ limit, offset, playingToday, languageVersion } = {}) {
+export async function getMovies({ limit, offset, playingToday, languageVersion, search } = {}) {
     const params = new URLSearchParams();
     if (limit != null) params.set('limit', limit);
     if (offset != null && offset !== 0) params.set('offset', offset);
     if (playingToday) params.set('playing_today', 'true');
     if (languageVersion) params.set('language_version', languageVersion);
+    if (search) params.set('search', search);
     const query = params.toString() ? `?${params}` : '';
     const response = await fetch(`${BASE_URL}/movies/${query}`);
     if (!response.ok) {
