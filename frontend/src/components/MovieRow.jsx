@@ -3,15 +3,9 @@ import MovieCard from "./MovieCard";
 export default function MovieRow({ movies, onMovieClick }) {
   if (!movies.length) return null;
   return (
-    <div style={{
-      display: "flex",
-      gap: 8,
-      overflowX: "auto",
-      paddingBottom: 12,
-      scrollbarWidth: "thin",
-    }}>
+    <div className="movie-row">
       {movies.map(movie => (
-        <div key={movie.id} style={{ minWidth: 140, flexShrink: 0 }}>
+        <div key={movie.id} className="movie-row__item">
           <MovieCard movie={movie} onClick={() => onMovieClick(movie.id)} />
         </div>
       ))}

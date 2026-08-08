@@ -1,27 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMovies } from "../api";
 import MovieRow from "../components/MovieRow";
 import MovieGrid from "../components/MovieGrid";
 import Navbar from "../components/Navbar";
-
-const PAGE_SIZE = 18;
-
 import { langLabel } from "../lang";
 
-const chipStyle = (active) => ({
-  padding: "6px 16px",
-  borderRadius: 2,
-  border: active ? "1px solid var(--red)" : "1px solid var(--border)",
-  background: active ? "var(--red)" : "transparent",
-  color: "#fff",
-  fontSize: 12,
-  fontWeight: 600,
-  letterSpacing: 0.5,
-  cursor: "pointer",
-  transition: "all 0.15s ease",
-});
+const PAGE_SIZE = 18;
 
 export default function HomePage() {
   const [page, setPage] = useState(0);
@@ -64,38 +50,31 @@ export default function HomePage() {
     setPage(0);
   };
 
-  const sectionHeadingStyle = {
-    fontFamily: "var(--font-display)",
-    fontSize: 22,
-    letterSpacing: 2,
-    color: "var(--text-secondary)",
-    marginBottom: 16,
-    textTransform: "uppercase",
-  };
+  const chipClass = (active) => `chip${active ? " chip--active" : ""}`;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+    <div className="page">
       <Navbar />
-      <div style={{ padding: "0 48px 64px" }}>
-        {error && <p style={{ color: "var(--red)", padding: "32px 0" }}>Failed to load movies</p>}
+      <div className="page-body">
+        {error && <p className="status status--error">Failed to load movies</p>}
 
         {playingToday.length > 0 && (
-          <section style={{ marginBottom: 48 }}>
-            <h2 style={sectionHeadingStyle}>Playing Today</h2>
+          <section className="section">
+            <h2 className="section-heading">Playing Today</h2>
             <MovieRow movies={playingToday} onMovieClick={handleMovieClick} />
           </section>
         )}
 
         <section>
-          <h2 style={sectionHeadingStyle}>All Movies</h2>
+          <h2 className="section-heading">All Movies</h2>
 
           {availableLangs.length > 0 && (
-            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-              <button type="button" style={chipStyle(!selectedLang)} onClick={() => handleLangSelect(null)}>
+            <div className="chip-row">
+              <button type="button" className={chipClass(!selectedLang)} onClick={() => handleLangSelect(null)}>
                 Any
               </button>
               {availableLangs.map((lang) => (
-                <button type="button" key={lang} style={chipStyle(selectedLang === lang)} onClick={() => handleLangSelect(lang)}>
+                <button type="button" key={lang} className={chipClass(selectedLang === lang)} onClick={() => handleLangSelect(lang)}>
                   {langLabel(lang)}
                 </button>
               ))}

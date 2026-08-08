@@ -16,6 +16,8 @@
   --border: #2a2a2a;
   --font-display: 'Bebas Neue', sans-serif;
   --font-body: 'DM Sans', sans-serif;
+  /* Page gutter scales with the viewport: tight on phones, roomy on desktop. */
+  --gutter: clamp(16px, 5vw, 48px);
 }
 
 html, body, #root {
@@ -36,6 +38,11 @@ button {
   cursor: pointer;
 }
 
+:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -46,4 +53,439 @@ button {
 ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 3px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Page shell                                                          */
+/* ------------------------------------------------------------------ */
+
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.page-body {
+  padding: 0 var(--gutter) 64px;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 0 var(--gutter);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(to bottom, #000000cc, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.navbar__logo {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 5vw, 28px);
+  letter-spacing: 2px;
+  color: var(--red);
+}
+
+.section {
+  margin-bottom: 48px;
+}
+
+.section-heading {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 4vw, 22px);
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------ */
+/* Chips (language / filter pills)                                     */
+/* ------------------------------------------------------------------ */
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.chip {
+  padding: 8px 16px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.chip--active {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+@media (hover: hover) {
+  .chip:not(.chip--active):hover {
+    border-color: var(--text-secondary);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Movie card / grid / row                                             */
+/* ------------------------------------------------------------------ */
+
+.movie-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  text-align: left;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background-color: var(--bg-card);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.movie-card__poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.movie-card__fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.movie-card__overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32px 10px 10px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  transition: opacity 0.2s ease;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.3;
+}
+
+/* Pointer devices get the lift-and-reveal treatment on hover. */
+@media (hover: hover) {
+  .movie-card__overlay {
+    opacity: 0;
+  }
+  .movie-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    z-index: 10;
+  }
+  .movie-card:hover .movie-card__overlay,
+  .movie-card:focus-visible .movie-card__overlay {
+    opacity: 1;
+  }
+}
+
+/* Touch devices never fire hover, so the title has to stay visible. */
+@media (hover: none) {
+  .movie-card__overlay {
+    opacity: 1;
+  }
+}
+
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .movie-grid {
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  }
+}
+
+.movie-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  /* Let the row bleed into the gutter so cards hint at more content. */
+  scroll-snap-type: x proximity;
+}
+
+/* Needs a definite width: with only min-width the item would size to the
+   poster's intrinsic width (400px) instead of the intended card size. */
+.movie-row__item {
+  flex: 0 0 140px;
+  width: 140px;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 600px) {
+  .movie-row__item {
+    flex-basis: 105px;
+    width: 105px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Pagination                                                          */
+/* ------------------------------------------------------------------ */
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 32px;
+}
+
+/* Visually an 8px dot, but with a 44px tap target around it. */
+.pagination__dot {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination__dot::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 0.2s;
+}
+
+.pagination__dot--active::before {
+  background: var(--red);
+}
+
+/* ------------------------------------------------------------------ */
+/* Movie page hero                                                     */
+/* ------------------------------------------------------------------ */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 48px;
+}
+
+.hero__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  filter: blur(2px) brightness(0.35);
+  transform: scale(1.05);
+}
+
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(20, 20, 20, 0.95) 40%, transparent),
+    linear-gradient(to top, var(--bg) 0%, transparent 40%);
+}
+
+.hero__inner {
+  position: relative;
+  min-height: 360px;
+  display: flex;
+  align-items: flex-end;
+  padding: 24px var(--gutter) 32px;
+  gap: 32px;
+}
+
+.hero__poster {
+  height: 200px;
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  flex-shrink: 0;
+}
+
+.hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 9vw, 52px);
+  letter-spacing: 2px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  overflow-wrap: anywhere;
+}
+
+.hero__back {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 12px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Stack the poster above the title once they can no longer sit side by side. */
+@media (max-width: 640px) {
+  .hero {
+    margin-bottom: 32px;
+  }
+  .hero__inner {
+    min-height: 220px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .hero__poster {
+    height: 132px;
+  }
+  .hero__scrim {
+    background: linear-gradient(to top, var(--bg) 0%, rgba(20, 20, 20, 0.5) 60%, transparent);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Showtimes                                                           */
+/* ------------------------------------------------------------------ */
+
+.showtime {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 8px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.showtime__main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+}
+
+.showtime__time {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 6vw, 28px);
+  letter-spacing: 1px;
+  color: #fff;
+  min-width: 62px;
+}
+
+.showtime__cinema {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.showtime__hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.showtime__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.showtime__badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+}
+
+.showtime__price {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.showtime__book {
+  padding: 10px 20px;
+  background: var(--red);
+  color: #fff;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .showtime__book:hover {
+    background: var(--red-hover);
+  }
+}
+
+/* Below this width the two halves can't share a line without squashing. */
+@media (max-width: 560px) {
+  .showtime {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .showtime__main {
+    gap: 16px;
+    width: 100%;
+  }
+  .showtime__meta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .showtime__book {
+    margin-left: auto;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Status text                                                         */
+/* ------------------------------------------------------------------ */
+
+.status {
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.status--error {
+  color: var(--red);
 }
