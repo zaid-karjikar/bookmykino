@@ -1,0 +1,22 @@
+# Render blueprint. Connect the repo in the Render dashboard and it picks this
+# up; secrets marked `sync: false` are entered there rather than committed.
+services:
+  - type: web
+    name: bookmykino-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      # Render's current default is Python 3.14, which cannot install pyiceberg
+      # (a hard transitive dependency of the Supabase client, with no 3.14
+      # wheel). The .python-version file pins 3.12 so the build gets a wheel
+      # instead of trying to compile from source.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
