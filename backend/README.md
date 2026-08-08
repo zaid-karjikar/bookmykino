@@ -35,6 +35,11 @@ Response: `{ "items": [...], "total": <int> }`
 - **showtimes** — id, movie_id, cinema_id, start_time, price, booking_url
 
 ## Running locally
+
+Requires **Python 3.12** (pinned in `.python-version`, matching the scraper's
+CI). Avoid 3.14 for now: the Supabase client pulls in `pyiceberg`, which
+publishes no wheel for it and fails to build from source.
+
 ```bash
 uvicorn app.main:app --reload
 ```
