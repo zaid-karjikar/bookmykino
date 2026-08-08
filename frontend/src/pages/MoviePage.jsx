@@ -3,7 +3,13 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMovie, getShowtimes } from "../api";
 import Navbar from "../components/Navbar";
+import DemoNotice from "../components/DemoNotice";
 import { langLabel } from "../lang";
+
+// Every date and time on this page is the cinema's local time, never the
+// viewer's. A screening at 20:15 in Berlin reads as 20:15 from anywhere;
+// without this a visitor in Los Angeles would be shown 11:15 the same morning.
+const CINEMA_TZ = "Europe/Berlin";
 
 function getNext7Days() {
   const days = [];
@@ -11,8 +17,18 @@ function getNext7Days() {
     const d = new Date();
     d.setDate(d.getDate() + i);
     days.push({
-      label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-DE", { weekday: "short", day: "numeric", month: "short" }),
-      value: new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d),
+      label:
+        i === 0
+          ? "Today"
+          : i === 1
+            ? "Tomorrow"
+            : d.toLocaleDateString("en-DE", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                timeZone: CINEMA_TZ,
+              }),
+      value: new Intl.DateTimeFormat("en-CA", { timeZone: CINEMA_TZ }).format(d),
     });
   }
   return days;
@@ -84,6 +100,8 @@ export default function MoviePage() {
 
       {/* Showtimes section */}
       <div className="page-body">
+        <DemoNotice />
+
         {/* Language filter */}
         {availableLangs.length > 0 && (
           <div className="chip-row">
@@ -122,7 +140,11 @@ export default function MoviePage() {
           <div key={showtime.id} className="showtime">
             <div className="showtime__main">
               <span className="showtime__time">
-                {new Date(showtime.start_time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+                {new Date(showtime.start_time).toLocaleTimeString("de-DE", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: CINEMA_TZ,
+                })}
               </span>
               <div>
                 <p className="showtime__cinema">{showtime.cinema_name}</p>
