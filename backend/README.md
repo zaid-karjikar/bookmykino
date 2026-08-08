@@ -16,6 +16,10 @@ FastAPI backend for BookMyKino — a cinema movie discovery platform for Berlin.
 | `limit` | int | — | Max results to return (1–200) |
 | `offset` | int | 0 | Number of results to skip |
 | `playing_today` | bool | false | Only return movies with showtimes today |
+| `language_version` | str | — | Only movies with an upcoming showtime in this version |
+| `search` | str | — | Case-insensitive match on the original or German title (max 100 chars) |
+
+Results are ordered by title so pagination is stable across requests.
 
 Response: `{ "items": [...], "total": <int> }`
 
@@ -23,6 +27,7 @@ Response: `{ "items": [...], "total": <int> }`
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
 | `date` | date | today | Filter showtimes to this date (`YYYY-MM-DD`) |
+| `language_version` | str | — | Only showtimes in this language version |
 
 ## Tech stack
 - **Framework:** FastAPI
