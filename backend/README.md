@@ -23,6 +23,11 @@ Results are ordered by title so pagination is stable across requests.
 
 Response: `{ "items": [...], "total": <int> }`
 
+Responses are cached in Redis for `MOVIES_CACHE_TTL_SECONDS` (default 30s),
+keyed on the full set of query params. If Redis is unreachable the endpoint
+falls back to querying the database directly — caching is an optimization,
+never a dependency. See `backend/benchmark_cache.py` for measured latency.
+
 ### `GET /movies/{id}/showtimes` query params
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -32,6 +37,7 @@ Response: `{ "items": [...], "total": <int> }`
 ## Tech stack
 - **Framework:** FastAPI
 - **Database:** Supabase (PostgreSQL)
+- **Cache:** Redis (`GET /movies/` only)
 - **Timezone:** All "today" logic uses Europe/Berlin
 
 ## Data model
@@ -80,4 +86,8 @@ ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
 # Optional. Needed for seeding if RLS is enabled on the showtimes table.
 SUPABASE_SERVICE_ROLE_KEY=
+
+# Optional. Both have working defaults — see .env.example.
+REDIS_URL=
+MOVIES_CACHE_TTL_SECONDS=
 ```

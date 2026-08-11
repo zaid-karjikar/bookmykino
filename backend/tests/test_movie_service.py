@@ -238,6 +238,63 @@ class TestGetAllMovies:
 
 
 # ---------------------------------------------------------------------------
+# get_all_movies caching
+# ---------------------------------------------------------------------------
+
+
+class TestGetAllMoviesCaching:
+    def test_second_identical_call_is_served_from_cache(self, mock_db, mock_cache):
+        # Only one round of responses queued — if the second call fell
+        # through to the database it would drain an empty queue and get
+        # back {"data": [], "count": 0} instead, so an equal result here
+        # proves the cache served it.
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row()], count=1)
+        mock_db.queue([{"movie_id": MOVIE_ID_1, "language_version": "OV"}])
+
+        first = movie_service.get_all_movies()
+        second = movie_service.get_all_movies()
+
+        assert second["total"] == first["total"] == 1
+        assert [str(i.id) for i in second["items"]] == [
+            str(i.id) for i in first["items"]
+        ]
+        assert len(mock_cache.store) == 1
+
+    def test_different_params_are_cached_separately(self, mock_db, mock_cache):
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row()], count=1)
+        mock_db.queue([])
+
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row()], count=1)
+        mock_db.queue([])
+
+        movie_service.get_all_movies(search="dune")
+        movie_service.get_all_movies(search="matrix")
+
+        assert len(mock_cache.store) == 2
+        assert len(mock_db.calls_to("table")) == 6  # 3 queries × 2 uncached calls
+
+    def test_cache_miss_falls_through_when_redis_is_down(self, mock_db, monkeypatch):
+        class BrokenCache:
+            def get(self, key):
+                return None  # mirrors Cache.get()'s fail-open behavior
+
+            def set(self, key, value, ttl):
+                pass  # mirrors Cache.set()'s fail-open behavior
+
+        monkeypatch.setattr("app.services.movie_service.cache", BrokenCache())
+        mock_db.queue([{"movie_id": MOVIE_ID_1}])
+        mock_db.queue([_movie_row()], count=1)
+        mock_db.queue([{"movie_id": MOVIE_ID_1, "language_version": "OV"}])
+
+        result = movie_service.get_all_movies()
+
+        assert result["total"] == 1
+
+
+# ---------------------------------------------------------------------------
 # _ilike_pattern  (search escaping)
 # ---------------------------------------------------------------------------
 

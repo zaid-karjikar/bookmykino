@@ -1,6 +1,14 @@
+from app.core.cache import cache
+from app.core.config import settings
 from app.database.db import database
-from app.schemas.movie_schema import MovieResponse, ShowtimeResponse
+from app.schemas.movie_schema import (
+    MovieResponse,
+    PaginatedMovieResponse,
+    ShowtimeResponse,
+)
 from datetime import datetime, date as date_type
+import hashlib
+import json
 import zoneinfo
 
 BERLIN_TZ = zoneinfo.ZoneInfo("Europe/Berlin")
@@ -28,12 +36,59 @@ def _ilike_pattern(term: str) -> str:
     return f'"{escaped}"'
 
 
+def _movies_cache_key(
+    limit: int | None,
+    offset: int,
+    playing_today_only: bool,
+    language_version: str | None,
+    search: str | None,
+) -> str:
+    payload = json.dumps(
+        {
+            "limit": limit,
+            "offset": offset,
+            "playing_today_only": playing_today_only,
+            "language_version": language_version,
+            "search": search,
+        },
+        sort_keys=True,
+    )
+    digest = hashlib.sha256(payload.encode()).hexdigest()
+    return f"movies:list:{digest}"
+
+
 def get_all_movies(
     limit: int | None = None,
     offset: int = 0,
     playing_today_only: bool = False,
     language_version: str | None = None,
     search: str | None = None,
+):
+    cache_key = _movies_cache_key(
+        limit, offset, playing_today_only, language_version, search
+    )
+    cached = cache.get(cache_key)
+    if cached is not None:
+        parsed = PaginatedMovieResponse.model_validate_json(cached)
+        return {"items": parsed.items, "total": parsed.total}
+
+    response = _fetch_all_movies(
+        limit, offset, playing_today_only, language_version, search
+    )
+    cache.set(
+        cache_key,
+        PaginatedMovieResponse(**response).model_dump_json(),
+        settings.MOVIES_CACHE_TTL_SECONDS,
+    )
+    return response
+
+
+def _fetch_all_movies(
+    limit: int | None,
+    offset: int,
+    playing_today_only: bool,
+    language_version: str | None,
+    search: str | None,
 ):
     today = datetime.now(BERLIN_TZ).date()
     today_start, today_end = _day_range(today)

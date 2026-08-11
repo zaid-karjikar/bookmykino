@@ -84,6 +84,25 @@ class MockDatabase:
 
 
 # ---------------------------------------------------------------------------
+# Fake cache
+# ---------------------------------------------------------------------------
+
+
+class FakeCache:
+    """In-memory stand-in for app.core.cache.Cache — no real Redis, no TTL
+    expiry, since tests care about hit/miss behavior, not timing."""
+
+    def __init__(self):
+        self.store: dict[str, str] = {}
+
+    def get(self, key: str) -> str | None:
+        return self.store.get(key)
+
+    def set(self, key: str, value: str, ttl: int) -> None:
+        self.store[key] = value
+
+
+# ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
@@ -94,6 +113,16 @@ def mock_db(monkeypatch):
     db = MockDatabase()
     monkeypatch.setattr("app.services.movie_service.database", db)
     return db
+
+
+@pytest.fixture(autouse=True)
+def mock_cache(monkeypatch):
+    """Patch movie_service.cache with a fresh FakeCache for every test, so
+    tests never touch a real Redis instance and each starts with a cold
+    cache."""
+    fake = FakeCache()
+    monkeypatch.setattr("app.services.movie_service.cache", fake)
+    return fake
 
 
 @pytest.fixture
