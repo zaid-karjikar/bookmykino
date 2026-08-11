@@ -12,8 +12,12 @@ export default function MovieCard({ movie, onClick }) {
         <span className="movie-card__fallback">{movie.title}</span>
       )}
 
-      {/* Title overlay — revealed on hover, always shown on touch devices. */}
-      <span className="movie-card__overlay">{movie.title}</span>
+      {/* Title overlay — revealed on hover, always shown on touch devices.
+          Purely decorative: it repeats text the button's accessible name
+          (from the poster's alt or the fallback span) already provides. */}
+      <span className="movie-card__overlay" aria-hidden="true">
+        {movie.title}
+      </span>
     </button>
   );
 }
