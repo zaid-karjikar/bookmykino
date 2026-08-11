@@ -6,11 +6,10 @@ router correctly maps HTTP params to service calls and serialises responses,
 not re-testing service logic.
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from uuid import uuid4
 from datetime import datetime, timezone
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app

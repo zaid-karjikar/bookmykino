@@ -2,9 +2,6 @@
 Pure unit tests for movie_schema.py — no DB, no network.
 """
 from uuid import uuid4
-from datetime import datetime, timezone
-
-import pytest
 
 from app.schemas.movie_schema import ShowtimeResponse
 

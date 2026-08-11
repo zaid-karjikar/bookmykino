@@ -28,10 +28,8 @@ get_showtimes_for_movie:
   1. showtimes query        → list of rows
 """
 
-from datetime import date, datetime, timezone
+from datetime import date
 from uuid import uuid4
-
-import pytest
 
 from app.services import movie_service
 

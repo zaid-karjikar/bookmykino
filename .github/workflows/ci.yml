@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Matches backend/.python-version. 3.14 cannot install pyiceberg, a
+          # transitive dependency of the Supabase client.
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Ruff
+        working-directory: backend
+        run: ruff check .
+
+      - name: Pytest
+        working-directory: backend
+        run: python -m pytest
